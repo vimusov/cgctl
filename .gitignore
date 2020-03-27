@@ -1,0 +1,10 @@
+/.project
+/.cproject
+/.settings
+*.[oais]
+/cgctl
+/cgctl-append
+/cgctl-start
+/cgctl-stop
+/scan.log
+/strace_out

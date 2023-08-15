@@ -1,52 +1,32 @@
-Что это?
-========
+# What?
 
-Утилиты `cgctl`, `cgctl-append`, `cgctl-start`, `cgctl-stop` предназначены для контроля
-за процессами средствами cgroup и ограничения потребления ими (процессами) системных ресурсов.
+A bunch of utilities which makes daemons management better.
+They made to be used with SysV init scripts or with upstart configs.
 
-История
-=======
+# How?
 
-Набор утилит был создан отделом разработки компании "Айдеко" (https://ideco.ru) для использования
-совместно с init-скриптами, а в дальнейшем - с upstart, в дистрибутиве CentOS версий 6.х.
+The utilities are built over cgroup v1 and allows to control system resources consumption.
+Also they watch over child processes and help to kill all of them when a daemon is going to stop.
 
-Возможности
-===========
+When a daemon is going to run, a new cgroup is created. All child processes will be put into it
+and limited as needed. Limits can be set on CPU usage and RAM+SWAP.
 
-Контроль заключается в том, что перед запуском целевого процесса создаётся новая cgroup,
-в которую будут добавляться все дочерние процессы, порождённые запускаемым целевым
-процессом. При остановке целевого процесса сначала завершается он, а потом все оставшиеся
-порождённые им ранее дочерние процессы.
+**WARNING!** Limits are calculating as a percent of total system capabilities!
 
-Ограничения на потребление системных ресурсов могут накладываться по двум видам ресурсов:
-потребление CPU и потребление памяти (RAM + SWAP).
+# Build
 
-**ВАЖНО!** Ограничения задаются в процентах от **суммарных ресурсов** системы. Например,
-25% CPU и 50% RAM означают что **при высокой нагрузке на систему** процесс может потреблять
-не более 25% от всех ядер установленного в сервере процессора и не более 50% от всего объёма
-доступной памяти (RAM + SWAP).
+- CentOS >= 6.6;
+- gcc & glibc-devel required;
 
-В целом, ограничения cgroup более гибкие в отличие от prlimit(2). Когда система не загружена,
-процессы в cgroup могут потреблять неограниченное количество ресурсов. Но когда нагрузка
-возрастает и количество доступных ресурсов снижается, ограничения начинают действовать.
+`/cgroup` must be the mountpoint of cgroupfs. You can change it in `CGROUP_ROOT_DIR`:`conf.h`.
 
-Подробное описание см. в [Инструкции](manual.md). Примеры использования см. в подкаталоге `examples`.
+# Usage
 
-Лицензия
-========
+See the [manual](manual.md) for the details. Also look at the `examples` subdirectory.
 
-Исходный код предоставляется на условиях лицензии GPL 2.
+# Status
 
-Сборка
-======
+Production ready.
 
-Утилиты собираются и работают в CentOS >= 6.6, с использованием только ванильного набора пакетов
-из стандартного репозитория. Точкой монтирования cgroupfs должен быть каталог `/cgroup`.
-Если в вашем случае это не так, требуется отредактировать константу `CGROUP_ROOT_DIR`
-в файле `conf.h` и пересобрать проект.
-
-Статус
-======
-
-Production ready. Испытано в работе на протяжении более чем четырёх лет. Все обнаруженные за это
-время баги устранены.
+# License
+GPL.

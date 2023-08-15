@@ -1,125 +1,38 @@
-cgctl
-=====
+# cgctl
 
-Используется в init-скриптах sysvinit, заменяя собой shebang. Иное применение не предусмотрено,
-вне init-скриптов используйте `cgctl-start`, `cgctl-append` и `cgctl-stop`.
-
-Пример:
+Intended to be used in SysV init scripts as a shebang.
 
 ```
 #!/usr/bin/cgctl --options=cpu_usage=50,mem_usage=25
-# не более 50% CPU и не более 25% памяти
+# Set CPU limit to 50% and RAM+SWAP limit to 25%.
 
-... далее идёт весь остальной код init-скрипта.
+... # the content of the script
 ```
 
-Опции:
+# cgctl-start
 
-```
-cgctl [--options=OPTIONS]
-
-OPTIONS: debug,group=NAME,cpu_usage=NUM,mem_usage=NUM
-
-debug: включить режим отладки, писать в логи больше, по-умолчанию выключено;
-group=NAME: использовать NAME в качестве имени cgroup, по-умолчанию берётся название init-скрипта;
-cpu_usage=NUM: ограничить потребление CPU на NUM процентов, по-умолчанию 100 (не ограничено);
-mem_usage=NUM: ограничить потребление памяти на NUM процентов, по-умолчанию 100 (не ограничено);
-
-**ВАЖНО!** ВСЕГДА разделяйте '--options' и 'OPTIONS' только символом '='! Если вместо '=' поставить
-пробел, то работать ничего не будет.
-```
-
-cgctl-start
-===========
-
-Используется в конфигах upstart для запуска процессов. Создаёт новую cgroup и добавляет в неё
-запускаемую программу.
-
-Пример:
+Intended to be used with upstart as a start action.
 
 ```
 description "Some program"
 expect stop
+# Create a cgroup named 'some_program', limit CPU to 10% and RAM+SWAP to 5%.
 exec cgctl-start --cpu-usage=10 --mem-usage=5 -- some_program --option=value
 ```
 
-Опции:
+# cgctl-stop
 
-```
-cgctl-start [--debug] [--group=NAME] [--cpu-usage=NUM] [--mem-usage=NUM] [--user=USER] -- PROG [ARGS...]
-
---debug: включить режим отладки, писать в логи больше, по-умолчанию выключено;
---group=NAME: использовать NAME в качестве имени cgroup, по-умолчанию берётся название программы;
---cpu-usage=NUM: ограничить потребление CPU на NUM процентов, по-умолчанию 100 (не ограничено);
---mem-usage=NUM: ограничить потребление памяти на NUM процентов, по-умолчанию 100 (не ограничено);
---user=USER: сбросить привилегии на пользователя USER (требуется для программ, в которых этого нет);
-
-GROUP: название cgroup:
-PROG: запускаемая программа;
-
-ARGS: аргументы запускаемой программы, опционально;
-
-**ВАЖНО!** После всех опций и перед запускаемой программой всегда используйте '--',
-иначе утилита cgctl-start будет считать что аргументы ARGS переданы ей,
-а не запускамой программе.
-```
-
-cgctl-stop
-==========
-
-Используется в конфигах upstart после остановки процесса. Прибивает все дочерние процессы,
-оставшиеся в cgroup после остановки процесса и удаляет cgroup.
-
-**ВАЖНО!** Используйте утилиту только в секции `post-stop`, иначе последствия могут быть
-непредсказуемыми.
-
-Пример:
+Intended to be used with upstart as a stop action. Will also kill all the children processes if any.
 
 ```
 post-stop exec cgctl-stop some_program
 ```
 
-Опции:
+# cgctl-append
 
-```
-cgctl-stop [--debug] GROUP
-
---debug: включить режим отладки, писать в логи больше, по-умолчанию выключено;
-
-GROUP: название cgroup:
-```
-
-cgctl-append
-============
-
-Используется в конфигах upstart для добавления дополнительных процессов в уже созданную
-и настроенную cgroup. Это востребовано для бэкендов, которые запускают несколько фоновых
-программ с помощью upstart и нужно ограничить по ресурсам их все сразу. В этом случае
-создаёт cgroup сам бэкенд, а остальные программы добавляются в уже существующий cgroup.
-
-**ВАЖНО!** Учтите, что при уничтожении cgroup с помощью `cgctl-stop` все добавленные
-ранее дополнительные процессы также будут убиты!
-
-Пример:
+Intended to be used with upstart. Runs a process and adds it into an existing cgroup instead of creating a new one.
 
 ```
 description "Some prog which runs under some backend"
 exec cgctl-append some_backend -- some_prog
-```
-
-Опции:
-
-```
-cgctl-append [--debug] GROUP -- PROG [ARGS...]
-
---debug: включить режим отладки, писать в логи больше, по-умолчанию выключено;
-
-GROUP: название cgroup:
-PROG: запускаемая программа;
-
-ARGS: аргументы запускаемой программы, опционально;
-
-**ВАЖНО!** После всех опций и перед запускаемой программой всегда используйте '--',
-иначе утилита cgctl-append будет считать что аргументы ARGS переданы ей,
-а не запускамой программе.
 ```
